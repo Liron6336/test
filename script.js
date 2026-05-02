@@ -171,3 +171,50 @@ document.querySelector('.buttons').addEventListener('click', (e) => {
 });
 
 updateDisplay();
+
+// keyboard support
+const keyMap = {
+  '0': ['digit', '0'], '1': ['digit', '1'], '2': ['digit', '2'],
+  '3': ['digit', '3'], '4': ['digit', '4'], '5': ['digit', '5'],
+  '6': ['digit', '6'], '7': ['digit', '7'], '8': ['digit', '8'],
+  '9': ['digit', '9'],
+  '.': ['decimal'],
+  ',': ['decimal'],
+  '+': ['operator', '+'],
+  '-': ['operator', '-'],
+  '*': ['operator', '*'],
+  '/': ['operator', '/'],
+  'Enter': ['equals'],
+  '=': ['equals'],
+  'Backspace': ['backspace'],
+  'Escape': ['clear'],
+  'Delete': ['clear'],
+  '%': ['percent'],
+};
+
+document.addEventListener('keydown', (e) => {
+  const mapping = keyMap[e.key];
+  if (!mapping) return;
+  e.preventDefault();
+
+  const [action, value] = mapping;
+  switch (action) {
+    case 'digit':     appendDigit(value); break;
+    case 'decimal':   appendDecimal();    break;
+    case 'operator':  setOperator(value); break;
+    case 'equals':    calculate();        break;
+    case 'clear':     clearAll();         break;
+    case 'backspace': backspace();        break;
+    case 'percent':   percent();          break;
+  }
+
+  // flash the corresponding button
+  const selector = value
+    ? `button[data-action="${action}"][data-value="${value}"]`
+    : `button[data-action="${action}"]`;
+  const btn = document.querySelector(selector);
+  if (btn) {
+    btn.classList.add('active');
+    setTimeout(() => btn.classList.remove('active'), 100);
+  }
+});
