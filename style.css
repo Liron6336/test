@@ -67,4 +67,44 @@ button {
   background: #0f3460;
   color: #ffffff;
   outline: none;
+  transition: filter 0.1s, transform 0.1s;
+}
+
+button:hover {
+  filter: brightness(1.25);
+}
+
+button:active,
+button.active {
+  transform: scale(0.94);
+  filter: brightness(0.9);
+}
+
+/* operator buttons */
+button[data-action="operator"] {
+  background: #e94560;
+}
+
+/* equals */
+button[data-action="equals"] {
+  background: #4ecca3;
+  color: #0f3460;
+  font-weight: 600;
+}
+
+/* AC */
+button[data-action="clear"] {
+  background: #f5a623;
+  color: #0f3460;
+  font-weight: 600;
+}
+
+/* backspace */
+button[data-action="backspace"] {
+  background: #533483;
+}
+
+/* percent */
+button[data-action="percent"] {
+  background: #533483;
 }
