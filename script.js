@@ -5,12 +5,24 @@ let currentInput = '0';
 let previousInput = '';
 let operator = null;
 let justEvaluated = false;
+let lastOperator = null;
+let lastOperand = null;
+
+function formatForDisplay(str) {
+  if (str === 'Error') return str;
+  const num = parseFloat(str);
+  if (isNaN(num)) return str;
+  // keep trailing dot while user is typing (e.g. "3.")
+  const hasTrailingDot = str.endsWith('.');
+  const formatted = num.toLocaleString('en-US', { maximumFractionDigits: 10 });
+  return hasTrailingDot ? formatted + '.' : formatted;
+}
 
 function updateDisplay() {
-  currentEl.textContent = currentInput;
+  currentEl.textContent = formatForDisplay(currentInput);
   if (operator && previousInput) {
     const opSymbol = { '+': '+', '-': '−', '*': '×', '/': '÷' }[operator] || operator;
-    historyEl.textContent = previousInput + ' ' + opSymbol;
+    historyEl.textContent = formatForDisplay(previousInput) + ' ' + opSymbol;
   } else {
     historyEl.textContent = '';
   }
@@ -44,22 +56,48 @@ function appendDecimal() {
 }
 
 function setOperator(op) {
-  if (operator && !justEvaluated && previousInput) {
+  // after evaluation, use result as left operand
+  if (justEvaluated) {
+    justEvaluated = false;
+  } else if (operator && previousInput) {
+    // chain: evaluate pending operation first
     calculate(true);
   }
   previousInput = currentInput;
   operator = op;
-  justEvaluated = false;
   currentInput = '0';
   updateDisplay();
 }
 
+function evaluate(a, op, b) {
+  switch (op) {
+    case '+': return a + b;
+    case '-': return a - b;
+    case '*': return a * b;
+    case '/': return a / b;
+  }
+}
+
 function calculate(chaining = false) {
-  if (!operator || !previousInput) return;
+  if (!operator || !previousInput) {
+    // repeat last operation on subsequent "=" presses
+    if (justEvaluated && lastOperator !== null && lastOperand !== null) {
+      const a = parseFloat(currentInput);
+      if (lastOperator === '/' && lastOperand === 0) {
+        currentInput = 'Error';
+        justEvaluated = true;
+        updateDisplay();
+        return;
+      }
+      const result = evaluate(a, lastOperator, lastOperand);
+      currentInput = String(parseFloat(result.toPrecision(10)));
+      updateDisplay();
+    }
+    return;
+  }
 
   const a = parseFloat(previousInput);
   const b = parseFloat(currentInput);
-  let result;
 
   if (operator === '/' && b === 0) {
     currentInput = 'Error';
@@ -70,14 +108,15 @@ function calculate(chaining = false) {
     return;
   }
 
-  switch (operator) {
-    case '+': result = a + b; break;
-    case '-': result = a - b; break;
-    case '*': result = a * b; break;
-    case '/': result = a / b; break;
+  const result = evaluate(a, operator, b);
+
+  if (!chaining) {
+    lastOperator = operator;
+    lastOperand = b;
   }
 
   currentInput = String(parseFloat(result.toPrecision(10)));
+
   if (!chaining) {
     previousInput = '';
     operator = null;
@@ -91,6 +130,8 @@ function clearAll() {
   previousInput = '';
   operator = null;
   justEvaluated = false;
+  lastOperator = null;
+  lastOperand = null;
   updateDisplay();
 }
 
@@ -119,13 +160,13 @@ document.querySelector('.buttons').addEventListener('click', (e) => {
   const value = btn.dataset.value;
 
   switch (action) {
-    case 'digit':    appendDigit(value); break;
-    case 'decimal':  appendDecimal();    break;
-    case 'operator': setOperator(value); break;
-    case 'equals':   calculate();        break;
-    case 'clear':    clearAll();         break;
-    case 'backspace': backspace();       break;
-    case 'percent':  percent();          break;
+    case 'digit':     appendDigit(value); break;
+    case 'decimal':   appendDecimal();    break;
+    case 'operator':  setOperator(value); break;
+    case 'equals':    calculate();        break;
+    case 'clear':     clearAll();         break;
+    case 'backspace': backspace();        break;
+    case 'percent':   percent();          break;
   }
 });
 
